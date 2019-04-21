@@ -6,9 +6,9 @@ namespace BitWasp\Bitcoin\Networking\Serializer\Structure;
 
 use BitWasp\Bitcoin\Networking\Structure\AlertDetail;
 use BitWasp\Bitcoin\Serializer\Types;
+use BitWasp\Buffertools\Buffer;
 use BitWasp\Buffertools\BufferInterface;
 use BitWasp\Buffertools\Parser;
-use BitWasp\Buffertools\Buffer;
 
 class AlertDetailSerializer
 {
@@ -89,7 +89,7 @@ class AlertDetailSerializer
 
         return new Buffer(
             sprintf(
-                str_repeat("%s", 12),
+                "%s%s%s%s%s%s%s%s%s%s%s%s",
                 $this->uint32le->write($detail->getVersion()),
                 $this->uint64le->write($detail->getRelayUntil()),
                 $this->uint64le->write($detail->getExpiration()),

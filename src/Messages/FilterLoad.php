@@ -7,8 +7,8 @@ namespace BitWasp\Bitcoin\Networking\Messages;
 use BitWasp\Bitcoin\Bloom\BloomFilter;
 use BitWasp\Bitcoin\Networking\Message;
 use BitWasp\Bitcoin\Networking\NetworkSerializable;
-use BitWasp\Bitcoin\Serializer\Bloom\BloomFilterSerializer;
 use BitWasp\Bitcoin\Networking\Serializer\Message\FilterLoadSerializer;
+use BitWasp\Bitcoin\Serializer\Bloom\BloomFilterSerializer;
 use BitWasp\Buffertools\BufferInterface;
 
 class FilterLoad extends NetworkSerializable
@@ -28,6 +28,7 @@ class FilterLoad extends NetworkSerializable
 
     /**
      * @return string
+     * @see https://en.bitcoin.it/wiki/Protocol_documentation#filterload.2C_filteradd.2C_filterclear.2C_merkleblock
      */
     public function getNetworkCommand(): string
     {

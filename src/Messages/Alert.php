@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace BitWasp\Bitcoin\Networking\Messages;
 
+use BitWasp\Bitcoin\Crypto\EcAdapter\Signature\SignatureInterface;
 use BitWasp\Bitcoin\Networking\Message;
 use BitWasp\Bitcoin\Networking\NetworkSerializable;
-use BitWasp\Bitcoin\Networking\Structure\AlertDetail;
 use BitWasp\Bitcoin\Networking\Serializer\Message\AlertSerializer;
 use BitWasp\Bitcoin\Networking\Serializer\Structure\AlertDetailSerializer;
-use BitWasp\Bitcoin\Crypto\EcAdapter\Signature\SignatureInterface;
+use BitWasp\Bitcoin\Networking\Structure\AlertDetail;
 use BitWasp\Buffertools\BufferInterface;
 
 class Alert extends NetworkSerializable
@@ -36,6 +36,7 @@ class Alert extends NetworkSerializable
 
     /**
      * @return string
+     * @see https://en.bitcoin.it/wiki/Protocol_documentation#alert
      */
     public function getNetworkCommand(): string
     {

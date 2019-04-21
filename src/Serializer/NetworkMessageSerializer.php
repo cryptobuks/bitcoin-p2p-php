@@ -38,17 +38,17 @@ use BitWasp\Bitcoin\Networking\Serializer\Structure\InventorySerializer;
 use BitWasp\Bitcoin\Networking\Serializer\Structure\NetworkAddressSerializer;
 use BitWasp\Bitcoin\Networking\Serializer\Structure\NetworkAddressTimestampSerializer;
 use BitWasp\Bitcoin\Networking\Structure\Header;
-use BitWasp\Bitcoin\Serializer\Bloom\BloomFilterSerializer;
-use BitWasp\Bitcoin\Serializer\Block\FilteredBlockSerializer;
 use BitWasp\Bitcoin\Serializer\Block\BlockHeaderSerializer;
 use BitWasp\Bitcoin\Serializer\Block\BlockSerializer;
+use BitWasp\Bitcoin\Serializer\Block\FilteredBlockSerializer;
 use BitWasp\Bitcoin\Serializer\Block\PartialMerkleTreeSerializer;
+use BitWasp\Bitcoin\Serializer\Bloom\BloomFilterSerializer;
 use BitWasp\Bitcoin\Serializer\Chain\BlockLocatorSerializer;
 use BitWasp\Bitcoin\Serializer\Transaction\TransactionSerializer;
 use BitWasp\Bitcoin\Serializer\Types;
+use BitWasp\Buffertools\Buffer;
 use BitWasp\Buffertools\BufferInterface;
 use BitWasp\Buffertools\Parser;
-use BitWasp\Buffertools\Buffer;
 
 class NetworkMessageSerializer
 {
@@ -194,7 +194,7 @@ class NetworkMessageSerializer
         $this->headerSerializer = new BlockHeaderSerializer();
         $this->blockSerializer = new BlockSerializer($this->math, $this->headerSerializer, $this->txSerializer);
         $this->filteredBlockSerializer = new FilteredBlockSerializer($this->headerSerializer, new PartialMerkleTreeSerializer());
-        $this->headersSerializer = new HeadersSerializer($this->headerSerializer);
+        $this->headersSerializer = new HeadersSerializer();
         $this->filterAddSerializer = new FilterAddSerializer();
         $this->filterLoadSerializer = new FilterLoadSerializer(new BloomFilterSerializer());
         $this->merkleBlockSerializer = new MerkleBlockSerializer($this->filteredBlockSerializer);
@@ -238,7 +238,7 @@ class NetworkMessageSerializer
     {
         $buffer = $header->getLength() > 0
             ? $parser->readBytes($header->getLength())
-            : new Buffer('', 0, $this->math);
+            : new Buffer('', 0);
 
         // Compare payload checksum against header value
         if (!Hash::sha256d($buffer)->slice(0, 4)->equals($header->getChecksum())) {
@@ -275,10 +275,10 @@ class NetworkMessageSerializer
                 $payload = $this->getHeadersSerializer->parse($buffer);
                 break;
             case Message::TX:
-                $payload = new Tx($this->txSerializer->parse($buffer));
+                $payload = new Tx($buffer);
                 break;
             case Message::BLOCK:
-                $payload = new Block($this->blockSerializer->parse($buffer));
+                $payload = new Block($buffer);
                 break;
             case Message::HEADERS:
                 $payload = $this->headersSerializer->parse($buffer);
@@ -341,7 +341,7 @@ class NetworkMessageSerializer
      */
     public function serialize(NetworkMessage $object): BufferInterface
     {
-        $prefix = $this->bs4le->write(Buffer::hex($this->network->getNetMagicBytes(), null, $this->math));
+        $prefix = $this->bs4le->write(Buffer::hex($this->network->getNetMagicBytes()));
         $header = $this->packetHeaderSerializer->serialize($object->getHeader());
         $payload = $object->getPayload()->getBuffer();
 
@@ -355,6 +355,6 @@ class NetworkMessageSerializer
      */
     public function parse(BufferInterface $data): NetworkMessage
     {
-        return $this->fromParser(new Parser($data, $this->math));
+        return $this->fromParser(new Parser($data));
     }
 }

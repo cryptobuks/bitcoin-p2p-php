@@ -7,12 +7,12 @@ namespace BitWasp\Bitcoin\Tests\Networking\Messages;
 use BitWasp\Bitcoin\Bitcoin;
 use BitWasp\Bitcoin\Crypto\Random\Random;
 use BitWasp\Bitcoin\Networking\Ip\Ipv4;
-use BitWasp\Bitcoin\Networking\Services;
-use BitWasp\Bitcoin\Tests\Networking\TestCase;
+use BitWasp\Bitcoin\Networking\Messages\Addr;
 use BitWasp\Bitcoin\Networking\Messages\Factory;
 use BitWasp\Bitcoin\Networking\Serializer\NetworkMessageSerializer;
-use BitWasp\Bitcoin\Networking\Messages\Addr;
+use BitWasp\Bitcoin\Networking\Services;
 use BitWasp\Bitcoin\Networking\Structure\NetworkAddressTimestamp;
+use BitWasp\Bitcoin\Tests\Networking\TestCase;
 
 class AddrTest extends TestCase
 {
@@ -30,8 +30,7 @@ class AddrTest extends TestCase
         $netAddr1 = new NetworkAddressTimestamp(time(), Services::NETWORK, $ip, 8333);
         $netAddr2 = new NetworkAddressTimestamp(time(), Services::NETWORK, $ip, 8333);
 
-        $addr->addAddress($netAddr1);
-        $addr->addAddress($netAddr2);
+        $addr = new Addr([$netAddr1, $netAddr2]);
         $this->assertEquals(2, count($addr));
         $this->assertEquals($netAddr1, $addr->getAddress(0));
         $this->assertEquals($netAddr2, $addr->getAddress(1));

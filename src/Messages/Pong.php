@@ -12,20 +12,24 @@ use BitWasp\Buffertools\BufferInterface;
 class Pong extends NetworkSerializable
 {
     /**
-     * @var int
+     * @var BufferInterface
      */
     private $nonce;
 
     /**
-     * @param int $nonce
+     * @param BufferInterface $nonce
      */
-    public function __construct(int $nonce)
+    public function __construct(BufferInterface $nonce)
     {
+        if ($nonce->getSize() !== 8) {
+            throw new \RuntimeException("Invalid nonce size");
+        }
         $this->nonce = $nonce;
     }
 
     /**
      * @return string
+     * @see https://en.bitcoin.it/wiki/Protocol_documentation#pong
      */
     public function getNetworkCommand(): string
     {
@@ -33,9 +37,9 @@ class Pong extends NetworkSerializable
     }
 
     /**
-     * @return int
+     * @return BufferInterface
      */
-    public function getNonce(): int
+    public function getNonce(): BufferInterface
     {
         return $this->nonce;
     }

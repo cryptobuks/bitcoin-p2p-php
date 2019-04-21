@@ -4,37 +4,23 @@ declare(strict_types=1);
 
 namespace BitWasp\Bitcoin\Networking\Serializer\Message;
 
-use BitWasp\Bitcoin\Block\BlockHeaderInterface;
 use BitWasp\Bitcoin\Networking\Messages\Headers;
-use BitWasp\Bitcoin\Serializer\Block\BlockHeaderSerializer;
 use BitWasp\Bitcoin\Serializer\Types;
 use BitWasp\Buffertools\Buffer;
 use BitWasp\Buffertools\BufferInterface;
+use BitWasp\Buffertools\Buffertools;
 use BitWasp\Buffertools\Parser;
 
 class HeadersSerializer
 {
     /**
-     * @var \BitWasp\Buffertools\Types\Vector
+     * @var \BitWasp\Buffertools\Types\VarInt
      */
-    private $vectorHeader;
+    private $varint;
 
-    /**
-     * @var BlockHeaderSerializer
-     */
-    private $headerSerializer;
-
-    /**
-     * @param BlockHeaderSerializer $header
-     */
-    public function __construct(BlockHeaderSerializer $header)
+    public function __construct()
     {
-        $this->headerSerializer = $header;
-        $this->vectorHeader = Types::vector(function (Parser $parser): BlockHeaderInterface {
-            $header = $this->headerSerializer->fromParser($parser);
-            $parser->readBytes(1);
-            return $header;
-        });
+        $this->varint = Types::varint();
     }
 
     /**
@@ -43,7 +29,13 @@ class HeadersSerializer
      */
     public function fromParser(Parser $parser): Headers
     {
-        return new Headers($this->vectorHeader->read($parser));
+        $numHeaders = $this->varint->read($parser);
+        $headers = [];
+        for ($i = 0; $i < $numHeaders; $i++) {
+            $headers[] = $parser->readBytes(80);
+            $parser->readBytes(1);
+        }
+        return new Headers(...$headers);
     }
 
     /**
@@ -61,11 +53,11 @@ class HeadersSerializer
      */
     public function serialize(Headers $msg): BufferInterface
     {
-        $headers = [];
-        foreach ($msg->getHeaders() as $header) {
-            $headers[] = new Buffer("{$this->headerSerializer->serialize($header)->getBinary()}\x00");
+        $numHeaders = $msg->count();
+        $encoded = Buffertools::numToVarIntBin($numHeaders);
+        for ($i = 0; $i < $numHeaders; $i++) {
+            $encoded .= "{$msg->getHeader($i)->getBinary()}\x00";
         }
-
-        return new Buffer($this->vectorHeader->write($headers));
+        return new Buffer($encoded);
     }
 }

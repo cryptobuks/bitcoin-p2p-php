@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace BitWasp\Bitcoin\Tests\Networking\Messages;
 
 use BitWasp\Bitcoin\Bitcoin;
-use BitWasp\Bitcoin\Block\BlockFactory;
 use BitWasp\Bitcoin\Crypto\Random\Random;
-use BitWasp\Bitcoin\Networking\Messages\Factory;
 use BitWasp\Bitcoin\Networking\Messages\Block;
+use BitWasp\Bitcoin\Networking\Messages\Factory;
 use BitWasp\Bitcoin\Networking\Serializer\NetworkMessageSerializer;
 use BitWasp\Bitcoin\Tests\Networking\TestCase;
+use BitWasp\Buffertools\Buffer;
 
 class BlockTest extends TestCase
 {
@@ -37,13 +37,13 @@ class BlockTest extends TestCase
             '01'.
             $txHex;
 
-        $newBlock = BlockFactory::fromHex($blockHex);
+        $newBlock = Buffer::hex($blockHex);
 
         $factory = new Factory(Bitcoin::getDefaultNetwork(), new Random());
         $block = $factory->block($newBlock);
 
         $this->assertEquals('block', $block->getNetworkCommand());
-        $this->assertEquals($newBlock, $block->getBlock());
+        $this->assertEquals($newBlock->getHex(), $block->getBlock()->getHex());
         $this->assertEquals($newBlock->getHex(), $block->getHex());
     }
 
@@ -71,12 +71,12 @@ class BlockTest extends TestCase
             '01'.
             $txHex;
 
-        $newBlock = BlockFactory::fromHex($blockHex);
+        $newBlock = Buffer::hex($blockHex);
         $block = new Block($newBlock);
 
         $serialized = $block->getNetworkMessage()->getBuffer();
         $parsed = $parser->parse($serialized)->getPayload();
 
-        $this->assertEquals($block, $parsed);
+        $this->assertEquals($block->getHex(), $parsed->getHex());
     }
 }

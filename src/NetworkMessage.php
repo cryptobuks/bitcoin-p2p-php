@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace BitWasp\Bitcoin\Networking;
 
 use BitWasp\Bitcoin\Crypto\Hash;
-use BitWasp\Bitcoin\Networking\Structure\Header;
-use BitWasp\Bitcoin\Serializable;
 use BitWasp\Bitcoin\Network\NetworkInterface;
 use BitWasp\Bitcoin\Networking\Serializer\NetworkMessageSerializer;
+use BitWasp\Bitcoin\Networking\Structure\Header;
+use BitWasp\Bitcoin\Serializable;
 use BitWasp\Buffertools\BufferInterface;
 
 class NetworkMessage extends Serializable
@@ -32,8 +32,10 @@ class NetworkMessage extends Serializable
      * @param NetworkInterface $network
      * @param NetworkSerializableInterface $message
      */
-    public function __construct(NetworkInterface $network, NetworkSerializableInterface $message)
-    {
+    public function __construct(
+        NetworkInterface $network,
+        NetworkSerializableInterface $message
+    ) {
         $this->network = $network;
         $this->payload = $message;
 

@@ -6,8 +6,8 @@ namespace BitWasp\Bitcoin\Networking\Peer;
 
 use BitWasp\Bitcoin\Networking\DnsSeeds\DnsSeedList;
 use BitWasp\Bitcoin\Networking\Ip\Ipv4;
-use BitWasp\Bitcoin\Networking\Settings\NetworkSettings;
 use BitWasp\Bitcoin\Networking\Services;
+use BitWasp\Bitcoin\Networking\Settings\NetworkSettings;
 use BitWasp\Bitcoin\Networking\Structure\NetworkAddress;
 use BitWasp\Bitcoin\Networking\Structure\NetworkAddressInterface;
 use React\Dns\Resolver\Resolver;
@@ -15,7 +15,6 @@ use React\Promise\Deferred;
 
 class Locator
 {
-
     /**
      * @var Resolver
      */
@@ -64,8 +63,8 @@ class Locator
         /** @var Peer[] $vNetAddr */
         foreach ($seeds as $seed) {
             $this->dns
-                ->resolve($seed)
-                ->then(function ($ipList) use ($peerList) {
+                ->resolveAll($seed, \DNS_A)
+                ->then(function (array $ipList) use ($peerList) {
                     $peerList->resolve($ipList);
                 }, function ($error) use ($peerList) {
                     $peerList->reject($error);
@@ -124,10 +123,9 @@ class Locator
                         $this->knownAddresses,
                         $addresses
                     );
-
                     $deferred->resolve($this);
                 },
-                function ($error) use ($deferred) {
+                function (\Exception $error) use ($deferred) {
                     $deferred->reject($error);
                 }
             )

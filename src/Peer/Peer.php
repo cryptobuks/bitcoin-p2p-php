@@ -4,23 +4,20 @@ declare(strict_types=1);
 
 namespace BitWasp\Bitcoin\Networking\Peer;
 
-use BitWasp\Bitcoin\Block\BlockInterface;
 use BitWasp\Bitcoin\Block\FilteredBlock;
 use BitWasp\Bitcoin\Bloom\BloomFilter;
 use BitWasp\Bitcoin\Chain\BlockLocator;
+use BitWasp\Bitcoin\Crypto\EcAdapter\Signature\SignatureInterface;
 use BitWasp\Bitcoin\Networking\Message;
-use BitWasp\Bitcoin\Networking\Messages\Version;
 use BitWasp\Bitcoin\Networking\Messages\Ping;
+use BitWasp\Bitcoin\Networking\Messages\Version;
 use BitWasp\Bitcoin\Networking\NetworkMessage;
 use BitWasp\Bitcoin\Networking\NetworkSerializable;
 use BitWasp\Bitcoin\Networking\Structure\AlertDetail;
 use BitWasp\Bitcoin\Networking\Structure\Header;
 use BitWasp\Bitcoin\Networking\Structure\Inventory;
 use BitWasp\Bitcoin\Networking\Structure\NetworkAddress;
-use BitWasp\Bitcoin\Networking\Structure\NetworkAddressInterface;
 use BitWasp\Bitcoin\Networking\Structure\NetworkAddressTimestamp;
-use BitWasp\Bitcoin\Crypto\EcAdapter\Signature\SignatureInterface;
-use BitWasp\Bitcoin\Transaction\TransactionInterface;
 use BitWasp\Buffertools\Buffer;
 use BitWasp\Buffertools\BufferInterface;
 use BitWasp\Buffertools\Parser;
@@ -62,7 +59,7 @@ class Peer extends EventEmitter
     private $remoteVersion;
 
     /**
-     * @var NetworkAddressInterface
+     * @var NetworkAddress
      */
     private $peerAddress;
 
@@ -94,7 +91,7 @@ class Peer extends EventEmitter
     /**
      * @return Version
      */
-    public function getLocalVersion()
+    public function getLocalVersion(): Version
     {
         return $this->localVersion;
     }
@@ -102,7 +99,7 @@ class Peer extends EventEmitter
     /**
      * @return Version
      */
-    public function getRemoteVersion()
+    public function getRemoteVersion(): Version
     {
         return $this->remoteVersion;
     }
@@ -112,9 +109,9 @@ class Peer extends EventEmitter
      * the connection process. Often better than the data contained
      * in a Version message.
      *
-     * @return NetworkAddressInterface
+     * @return NetworkAddress
      */
-    public function getRemoteAddress()
+    public function getRemoteAddress(): NetworkAddress
     {
         return $this->peerAddress;
     }
@@ -122,7 +119,7 @@ class Peer extends EventEmitter
     /**
      * @return ConnectionParams
      */
-    public function getConnectionParams()
+    public function getConnectionParams(): ConnectionParams
     {
         return $this->connectionParams;
     }
@@ -152,29 +149,27 @@ class Peer extends EventEmitter
             $parser = new Parser($data);
 
             $pos = $parser->getPosition();
-            $sz = $parser->getSize();
+            $sz = $data->getSize();
 
-            try {
-                while ($pos < $sz) {
-                    if (null === $this->incomingMsgHeader) {
-                        if ($sz - $pos < 24) {
-                            break;
-                        }
-
-                        $this->incomingMsgHeader = $this->msgs->getSerializer()->parseHeader($parser);
-                        $pos = $parser->getPosition();
-                    }
-
-                    if ($sz - $pos < $this->incomingMsgHeader->getLength()) {
+            while ($pos < $sz) {
+                if (null === $this->incomingMsgHeader) {
+                    if ($sz - $pos < 24) {
                         break;
                     }
-
-                    $message = $this->msgs->getSerializer()->parsePacket($this->incomingMsgHeader, $parser);
-                    $this->incomingMsgHeader = null;
-                    $this->emit('msg', [$this, $message]);
+                    $this->incomingMsgHeader = $this->msgs->getSerializer()->parseHeader($parser);
                     $pos = $parser->getPosition();
                 }
-            } catch (\Exception $e) {
+
+                if ($sz - $pos < $this->incomingMsgHeader->getLength()) {
+                    break;
+                }
+
+                $message = $this->msgs->getSerializer()->parsePacket($this->incomingMsgHeader, $parser);
+                $this->incomingMsgHeader = null;
+                $this->loop->futureTick(function () use ($message) {
+                    $this->emit('msg', [$this, $message]);
+                });
+                $pos = $parser->getPosition();
             }
 
             $this->buffer = $parser->getBuffer()->slice($pos)->getBinary();
@@ -289,14 +284,14 @@ class Peer extends EventEmitter
      * @param bool $relayToUs
      */
     public function version(
-        $protocolVersion,
-        $services,
-        $timestamp,
+        int $protocolVersion,
+        int $services,
+        int $timestamp,
         NetworkAddress $remoteAddr,
         NetworkAddress $localAddr,
-        $userAgent,
-        $blockHeight,
-        $relayToUs
+        string $userAgent,
+        int $blockHeight,
+        bool $relayToUs
     ) {
         $this->send($this->msgs->version(
             $protocolVersion,
@@ -343,7 +338,7 @@ class Peer extends EventEmitter
     }
 
     /**
-     * @param array $vInv
+     * @param Inventory[] $vInv
      */
     public function notfound(array $vInv)
     {
@@ -383,11 +378,11 @@ class Peer extends EventEmitter
     }
 
     /**
-     * @param TransactionInterface $tx
+     * @param BufferInterface $txData
      */
-    public function tx(TransactionInterface $tx)
+    public function tx(BufferInterface $txData)
     {
-        $this->send($this->msgs->tx($tx));
+        $this->send($this->msgs->tx($txData));
     }
 
     /**
@@ -413,19 +408,19 @@ class Peer extends EventEmitter
     }
 
     /**
-     * @param BlockInterface $block
+     * @param BufferInterface $blockData
      */
-    public function block(BlockInterface $block)
+    public function block(BufferInterface $blockData)
     {
-        $this->send($this->msgs->block($block));
+        $this->send($this->msgs->block($blockData));
     }
 
     /**
-     * @param array $vHeaders
+     * @param BufferInterface ...$vHeaders
      */
-    public function headers(array $vHeaders)
+    public function headers(BufferInterface ...$vHeaders)
     {
-        $this->send($this->msgs->headers($vHeaders));
+        $this->send($this->msgs->headers(...$vHeaders));
     }
 
     /**

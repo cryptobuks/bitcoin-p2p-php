@@ -9,6 +9,7 @@ use BitWasp\Bitcoin\Crypto\Random\Random;
 use BitWasp\Bitcoin\Network\NetworkInterface;
 use BitWasp\Bitcoin\Networking\Ip\IpInterface;
 use BitWasp\Bitcoin\Networking\Settings\NetworkSettings;
+use React\Dns\Resolver\Resolver;
 use React\EventLoop\LoopInterface;
 
 class Factory
@@ -47,11 +48,11 @@ class Factory
     }
 
     /**
-     * @return Dns\Resolver
+     * @return Resolver
      */
-    public function getDns(): Dns\Resolver
+    public function getDns(): Resolver
     {
-        return (new Dns\Factory())->create($this->settings->getDnsServer(), $this->loop);
+        return (new \React\Dns\Resolver\Factory())->create($this->settings->getDnsServer(), $this->loop);
     }
 
     /**
@@ -89,9 +90,15 @@ class Factory
      * @param Peer\ConnectionParams $params
      * @return Peer\Connector
      */
-    public function getConnector(Peer\ConnectionParams $params): Peer\Connector
-    {
-        return new Peer\Connector($this->getMessages(), $params, $this->loop, $this->settings->getSocketParams());
+    public function getConnector(
+        Peer\ConnectionParams $params
+    ): Peer\Connector {
+        return new Peer\Connector(
+            $this->getMessages(),
+            $params,
+            $this->loop,
+            $this->settings->getSocketParams()
+        );
     }
 
     /**
@@ -116,9 +123,16 @@ class Factory
      * @param Structure\NetworkAddressInterface $serverAddress
      * @return Peer\Listener
      */
-    public function getListener(Peer\ConnectionParams $params, Structure\NetworkAddressInterface $serverAddress): Peer\Listener
-    {
-        return new Peer\Listener($params, $this->getMessages(), $serverAddress, $this->loop);
+    public function getListener(
+        Peer\ConnectionParams $params,
+        Structure\NetworkAddressInterface $serverAddress
+    ): Peer\Listener {
+        return new Peer\Listener(
+            $params,
+            $this->getMessages(),
+            $serverAddress,
+            $this->loop
+        );
     }
 
     /**
@@ -127,8 +141,11 @@ class Factory
      * @param int $services
      * @return Structure\NetworkAddress
      */
-    public function getAddress(IpInterface $ipAddress, int $port = null, int $services = Services::NONE): Structure\NetworkAddress
-    {
+    public function getAddress(
+        IpInterface $ipAddress,
+        int $port = null,
+        int $services = Services::NONE
+    ): Structure\NetworkAddress {
         if (null === $port) {
             $port = $this->settings->getDefaultP2PPort();
         }
